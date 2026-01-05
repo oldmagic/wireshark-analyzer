@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wireshark Analyzer</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+            />
+          </svg>
+          <h1>Wireshark Analyzer</h1>
+        </div>
+        <div class="header-stats" id="headerStats"></div>
+      </header>
+
+    <!-- Upload Section -->
+    <section class="upload-section" id="uploadSection">
+    <input type="file" id="fileInput" accept=".txt,.json" hidden />
+    <div class="upload-box" id="uploadBox">
+        <div class="upload-icon">📁</div>
+        <h2>Upload Wireshark Export</h2>
+        <p>Drag & drop your .txt or .json file here or click to browse</p>
+        <p class="hint">Supports files up to 500MB</p>
+        <button class="btn btn-primary" id="selectFileBtn">
+        Select File
+        </button>
+    </div>
+    <div class="progress-container" id="progressContainer" hidden>
+        <div class="progress-info">
+        <span id="progressText">Parsing packets...</span>
+        <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+    </section>
+
+      <!-- Main Content -->
+      <main class="main-content" id="mainContent" hidden>
+        <!-- Tabs -->
+        <nav class="tabs">
+          <button class="tab active" data-tab="overview">📊 Overview</button>
+          <button class="tab" data-tab="packets">📦 Packets</button>
+          <button class="tab" data-tab="protocols">🔌 Protocols</button>
+          <button class="tab" data-tab="conversations">💬 Conversations</button>
+          <button class="tab" data-tab="timeline">📈 Timeline</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+          <!-- Overview Tab -->
+          <div class="tab-pane active" id="tab-overview">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-info">
+                  <span class="stat-value" id="totalPackets">0</span>
+                  <span class="stat-label">Total Packets</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">💾</div>
+                <div class="stat-info">
+                  <span class="stat-value" id="totalBytes">0</span>
+                  <span class="stat-label">Total Data</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🌐</div>
+                <div class="stat-info">
+                  <span class="stat-value" id="uniqueIPs">0</span>
+                  <span class="stat-label">Unique IPs</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🔌</div>
+                <div class="stat-info">
+                  <span class="stat-value" id="protocolCount">0</span>
+                  <span class="stat-label">Protocols</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="charts-grid">
+              <div class="chart-card">
+                <h3>Protocol Distribution</h3>
+                <canvas id="protocolChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h3>Top Talkers (by bytes)</h3>
+                <canvas id="talkersChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Packets Tab -->
+          <div class="tab-pane" id="tab-packets">
+            <div class="filters">
+              <input
+                type="text"
+                id="packetFilter"
+                placeholder="Filter by IP, protocol, or info..."
+                class="filter-input"
+              />
+              <select id="protocolFilter" class="filter-select">
+                <option value="">All Protocols</option>
+              </select>
+              <button class="btn btn-secondary" onclick="loadPackets()">Apply</button>
+            </div>
+
+            <div class="table-container">
+              <table class="packet-table">
+                <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Time</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Protocol</th>
+                    <th>Length</th>
+                    <th>Info</th>
+                  </tr>
+                </thead>
+                <tbody id="packetTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="pagination" id="pagination"></div>
+          </div>
+
+          <!-- Protocols Tab -->
+          <div class="tab-pane" id="tab-protocols">
+            <div class="protocol-grid" id="protocolGrid"></div>
+          </div>
+
+          <!-- Conversations Tab -->
+        <div class="tab-pane" id="tab-conversations">
+            <div class="table-container">
+                <table class="conversation-table">
+                <thead>
+                    <tr>
+                    <th>Endpoints</th>
+                    <th>Packets</th>
+                    <th>Bytes</th>
+                    <th>Protocols</th>
+                    <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="conversationTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+          <!-- Timeline Tab -->
+          <div class="tab-pane" id="tab-timeline">
+            <div class="chart-card full-width">
+              <h3>Packet Timeline</h3>
+              <canvas id="timelineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Packet Detail Modal -->
+      <div class="modal" id="packetModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Packet Details <span id="modalPacketNum"></span></h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body" id="modalBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversation Data Modal -->
+    <div class="modal" id="conversationModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+            <h2>Conversation Data: <span id="convEndpoints"></span></h2>
+            <button class="modal-close" onclick="closeConvModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+            <div class="conv-summary" id="convSummary"></div>
+            <div class="conv-data-table">
+                <table class="packet-table">
+                <thead>
+                    <tr>
+                    <th>No.</th>
+                    <th>Time</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Protocol</th>
+                    <th>Length</th>
+                    <th>Info</th>
+                    </tr>
+                </thead>
+                <tbody id="convDataBody"></tbody>
+                </table>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
