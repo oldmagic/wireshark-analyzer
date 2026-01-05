@@ -2,6 +2,8 @@
 
 A Node.js library for parsing Wireshark and tshark exported packet capture files. It extracts packet details, generates statistics, and provides insights into network traffic.
 
+![Wireshark Analyzer Screenshot](https://i.postimg.cc/QCVQdmbC/Skarmbild-2026-01-05-121516.png)
+
 ## Features
 
 - **Multi-format Support**: Automatically detects and parses:
